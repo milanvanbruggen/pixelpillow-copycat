@@ -28,14 +28,14 @@ if code:
     os.environ['SPOTIPY_TOKEN'] = token
 
 # Krijg de volgers van de podcast
-podcast_id = settings['podcast_id']
-followers = sp.podcast(podcast_id)['followers']['total']
+podcast_details = sp.show(podcast_id)
+st.write(podcast_details)
 
 # Lees de vorige podcast data
 df = pd.read_csv('podcast_data.csv')
 
 # Update de dataframe met de nieuwe volgers teller
-df = df.append({'date': pd.Timestamp.now(), 'followers': followers}, ignore_index=True)
+df = df.append({'date': pd.Timestamp.now(), 'podcast_details': podcast_details}, ignore_index=True)
 
 # Schrijf de dataframe terug naar het CSV bestand
 df.to_csv('podcast_data.csv', index=False)
