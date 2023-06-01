@@ -2,5 +2,6 @@
     "client_id": "f1ebaded8ec24991a59036f79947d247",
     "client_secret": "d051ac4e1a44498ba71bbc0f1c1bbcf6",
     "redirect_uri": "https://milanvanbruggen-pixelpillow-copycat-streamlit-app-rpi1ua.streamlit.app/",
+    "podcast_id": "3DyUg8oHEBW10ZlREDzgHg",
     "scope": "user-library-read"
 }
