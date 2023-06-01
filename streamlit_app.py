@@ -20,8 +20,8 @@ params = st.experimental_get_query_params()
 code = params.get('code')
 
 if code:
-    # Gebruik de code om een toegangstoken te krijgen
-    token_info = sp.oauth2.get_access_token(code)
+    # Gebruik de eerste code om een toegangstoken te krijgen
+    token_info = sp.auth_manager.get_access_token(code[0])
     token = token_info['access_token']
 
     # Sla het token op voor later gebruik
