@@ -52,5 +52,5 @@ if code:
 
 else:
     # Als er geen code is, vraag dan om in te loggen.
-    auth_url = sp.oauth2.get_authorize_url()
+    auth_url = sp.auth_manager.get_authorize_url()
     st.write(f'Please log in [here]({auth_url}).')
