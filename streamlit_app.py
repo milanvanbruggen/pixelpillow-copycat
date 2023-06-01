@@ -1,19 +1,19 @@
-import streamlit as st
+import os
+import json
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
-import os
-import json
+import streamlit as st
 
-# Lees settings uit settings.json
-with open("settings.json", "r") as read_file:
+# Laad de instellingen
+with open('settings.json', 'r') as read_file:
     settings = json.load(read_file)
 
-# Maak Spotify object
+# Initialiseer de Spotify client
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=settings['client_id'],
                                                client_secret=settings['client_secret'],
-                                               redirect_uri=settings['redirect_uri'],
-                                               scope=settings['scope']))
+                                               redirect_uri="https://milanvanbruggen-pixelpillow-copycat-streamlit-app-rpi1ua.streamlit.app/",
+                                               scope="user-read-playback-position,user-read-playback-state,user-modify-playback-state,playlist-modify-public,user-library-read"))
 
 # Haal code parameter uit URL
 params = st.experimental_get_query_params()
@@ -26,31 +26,19 @@ if code:
 
     # Sla het token op voor later gebruik
     os.environ['SPOTIPY_TOKEN'] = token
-    
-    # Haal de podcasts op die de gebruiker heeft opgeslagen
-    shows = sp.current_user_saved_shows()
 
-    # Maak een leeg dataframe om de show-gegevens in op te slaan
-    df = pd.DataFrame()
-
-    # Loop door de shows en voeg de gegevens toe aan het dataframe
-    for show in shows['items']:
-        show_data = show['show']
-        df = df.append({
-            'name': show_data['name'],
-            'publisher': show_data['publisher'],
-            'description': show_data['description'],
-            'link': show_data['external_urls']['spotify'],
-            'total_episodes': show_data['total_episodes'],
-        }, ignore_index=True)
-
-    # Toon het dataframe in de Streamlit-app
-    st.write(df)
-
-else:
-    # Als er geen code is, vraag dan om in te loggen.
-    auth_url = sp.auth_manager.get_authorize_url()
-    st.write(f'Please log in [here]({auth_url}).')
-    
 # Krijg de volgers van de podcast
+podcast_id = settings['podcast_id']
 followers = sp.podcast(podcast_id)['followers']['total']
+
+# Lees de vorige podcast data
+df = pd.read_csv('podcast_data.csv')
+
+# Update de dataframe met de nieuwe volgers teller
+df = df.append({'date': pd.Timestamp.now(), 'followers': followers}, ignore_index=True)
+
+# Schrijf de dataframe terug naar het CSV bestand
+df.to_csv('podcast_data.csv', index=False)
+
+# Toon de dataframe in de Streamlit app
+st.dataframe(df)
