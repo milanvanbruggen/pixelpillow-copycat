@@ -26,9 +26,6 @@ if code:
 
     # Sla het token op voor later gebruik
     os.environ['SPOTIPY_TOKEN'] = token
-
-    # Gebruik het token om toegang te krijgen tot Spotify API
-    sp.set_access_token(token)
     
     # Haal de podcasts op die de gebruiker heeft opgeslagen
     shows = sp.current_user_saved_shows()
@@ -54,3 +51,6 @@ else:
     # Als er geen code is, vraag dan om in te loggen.
     auth_url = sp.auth_manager.get_authorize_url()
     st.write(f'Please log in [here]({auth_url}).')
+    
+# Krijg de volgers van de podcast
+followers = sp.podcast(podcast_id)['followers']['total']
