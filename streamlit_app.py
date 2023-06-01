@@ -28,7 +28,7 @@ if code:
     os.environ['SPOTIPY_TOKEN'] = token
 
 # Krijg de volgers van de podcast
-podcast_details = sp.show(podcast_id)
+podcast_details = sp.shows(podcast_id)
 st.write(podcast_details)
 
 # Lees de vorige podcast data
