@@ -59,4 +59,31 @@ for i in range(num_candidates):
             "motivation": motivation
         })
 
-#
+# Process candidate information
+for candidate in candidate_info:
+    st.subheader(f"Matching for {candidate['name']}")
+    candidate_text = ""
+    if candidate["cv"] is not None:
+        candidate_text += candidate["cv"].read().decode(errors='ignore')
+    candidate_text += " "
+    if candidate["motivation"] is not None:
+        candidate_text += candidate["motivation"].read().decode(errors='ignore')
+
+    company_text = org_description + " " + org_values + " " + org_role
+
+    candidate_tokens = encode_input(candidate_text)
+    company_tokens = encode_input(company_text)
+
+    candidate_tokens = candidate_tokens.to(torch.long)  # Convert to long tensor
+    company_tokens = company_tokens.to(torch.long)  # Convert to long tensor
+
+    candidate_encoded = run_bert(candidate_tokens)
+    company_encoded = run_bert(company_tokens)
+
+    if candidate_encoded.size(1) == 0:
+        st.warning("Candidate encoding failed. Please check the input.")
+    elif company_encoded.size(1) == 0:
+        st.warning("Company encoding failed. Please check the input.")
+    else:
+        similarity_score = calculate_similarity(candidate_encoded, company_encoded)
+        st.success(f"Similarity score for {candidate['name']}: {similarity_score}")
