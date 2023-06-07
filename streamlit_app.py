@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 import streamlit as st
 import torch
 from transformers import RobertaTokenizer, RobertaModel
