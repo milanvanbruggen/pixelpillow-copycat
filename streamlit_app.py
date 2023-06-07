@@ -62,10 +62,10 @@ for candidate in candidate_info:
     st.subheader(f"Matching for {candidate['name']}")
     candidate_text = ""
     if candidate["cv"] is not None:
-        candidate_text += io.TextIOWrapper(candidate["cv"], encoding='utf-8').read()
+        candidate_text += candidate["cv"].read().decode(errors='ignore')
     candidate_text += " "
     if candidate["motivation"] is not None:
-        candidate_text += io.TextIOWrapper(candidate["motivation"], encoding='utf-8').read()
+        candidate_text += candidate["motivation"].read().decode(errors='ignore')
 
     company_text = org_description + " " + org_values + " " + org_role
 
