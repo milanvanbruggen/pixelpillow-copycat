@@ -1,58 +1,31 @@
-import streamlit as st
-from transformers import RobertaTokenizer, RobertaModel
+from transformers import BertTokenizer, BertModel
+import torch
 
-# Model laden
-model = RobertaModel.from_pretrained("roberta-base")
-tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+# Laad het BERT-model en tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained('bert-base-uncased')
 
-# Streamlit app configureren
-st.set_page_config(page_title="Job Matching App")
+# Functie voor het matchen van vacature en kandidaat
+def match_vacature_en_kandidaat(vacature, kandidaat):
+    # Tokenize de vacature en kandidaat
+    inputs = tokenizer.encode_plus(vacature, kandidaat, add_special_tokens=True, return_tensors='pt')
 
-# Functie om de berekeningen uit te voeren
-def run_roberta(tokens):
-    inputs = tokenizer.encode_plus(tokens, add_special_tokens=True, truncation=True, padding=True, return_tensors="pt")
-    outputs = model(**inputs)
-    return outputs
+    # Genereer de embeddings
+    with torch.no_grad():
+        outputs = model(**inputs)
 
-# UI-componenten weergeven
-st.title("Job Matching App")
+    # Haal de laatste verborgen toestand op
+    vacature_embedding = outputs.last_hidden_state[0][0]  # Embedding voor de vacature
+    kandidaat_embedding = outputs.last_hidden_state[0][1]  # Embedding voor de kandidaat
 
-company_name = st.text_input("Naam van de organisatie")
-company_core_values = st.text_input("Kernwaarden van de organisatie")
-job_role = st.text_input("Openstaande functie/rol")
+    # Bereken de cosinusgelijkenis tussen de embeddings
+    similarity_score = torch.cosine_similarity(vacature_embedding, kandidaat_embedding, dim=0)
 
-candidates = []
+    return similarity_score.item()
 
-# Kandidaat toevoegen aan de lijst
-def add_candidate(name, motivation_letter, cv):
-    candidates.append({"name": name, "motivation_letter": motivation_letter, "cv": cv})
+# Voorbeeldgebruik
+vacaturetekst = "Wij zoeken een ervaren softwareontwikkelaar met kennis van Python en ervaring met het bouwen van webtoepassingen."
+kandidaattekst = "Ik ben een ervaren softwareontwikkelaar met sterke vaardigheden in Python en uitgebreide ervaring in het bouwen van webtoepassingen."
 
-# Motivatiebrief en CV uploaden voor elke kandidaat
-candidate_name = st.text_input("Naam van de kandidaat")
-motivation_letter = st.file_uploader("Motivatiebrief uploaden", type="pdf")
-cv = st.file_uploader("CV uploaden", type="pdf")
-
-if st.button("Kandidaat toevoegen"):
-    if candidate_name and motivation_letter and cv:
-        add_candidate(candidate_name, motivation_letter, cv)
-        st.success("Kandidaat succesvol toegevoegd!")
-
-# Verzend knop
-if st.button("Verzend"):
-    if company_name and company_core_values and job_role and candidates:
-        st.subheader("Organisatie informatie:")
-        st.write("Naam van de organisatie:", company_name)
-        st.write("Kernwaarden van de organisatie:", company_core_values)
-        st.write("Openstaande functie/rol:", job_role)
-        st.subheader("Kandidaten:")
-        for candidate in candidates:
-            st.write("Naam:", candidate["name"])
-            st.write("Motivatiebrief:", candidate["motivation_letter"].name)
-            st.write("CV:", candidate["cv"].name)
-            st.write("Score:")
-            candidate_tokens = candidate["motivation_letter"].read().decode() + " " + candidate["cv"].read().decode()
-            outputs = run_roberta(candidate_tokens)
-            st.write(outputs)  # Weergeef de scores voor elke kandidaat
-    else:
-        st.warning("Vul alle velden in en voeg minstens één kandidaat toe.")
-
+score = match_vacature_en_kandidaat(vacaturetekst, kandidaattekst)
+print("Matchingscore:", score)
