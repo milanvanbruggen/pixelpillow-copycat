@@ -1,59 +1,58 @@
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 import streamlit as st
-import torch
 from transformers import RobertaTokenizer, RobertaModel
 
-# Model en tokenizer initialiseren
-model_name = "roberta-base"
-tokenizer = RobertaTokenizer.from_pretrained(model_name)
-model = RobertaModel.from_pretrained(model_name)
+# Model laden
+model = RobertaModel.from_pretrained("roberta-base")
+tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
 
-# Functie om tekst te encoderen met het RoBERTa-model
-def run_roberta(text):
-    tokens = tokenizer.encode(text, add_special_tokens=True)
-    tokens_tensor = torch.tensor([tokens])
-    outputs = model(tokens_tensor)
+# Streamlit app configureren
+st.set_page_config(page_title="Job Matching App")
+
+# Functie om de berekeningen uit te voeren
+def run_roberta(tokens):
+    inputs = tokenizer.encode_plus(tokens, add_special_tokens=True, truncation=True, padding=True, return_tensors="pt")
+    outputs = model(**inputs)
     return outputs
 
-# Streamlit app
+# UI-componenten weergeven
 st.title("Job Matching App")
 
-# Organisatie input
-st.header("Organisatie informatie")
-company_type = st.text_input("Wat voor bedrijf is het?")
-company_values = st.text_area("Wat zijn de kernwaarden van het bedrijf?")
-job_role = st.text_input("Wat is de openstaande functie/rol?")
+company_name = st.text_input("Naam van de organisatie")
+company_core_values = st.text_input("Kernwaarden van de organisatie")
+job_role = st.text_input("Openstaande functie/rol")
 
-# Kandidaten input
-st.header("Kandidaten")
-num_candidates = st.number_input("Aantal kandidaten", min_value=1, step=1, value=1)
+candidates = []
 
-candidate_names = []
-candidate_motivation_letters = []
-candidate_cvs = []
+# Kandidaat toevoegen aan de lijst
+def add_candidate(name, motivation_letter, cv):
+    candidates.append({"name": name, "motivation_letter": motivation_letter, "cv": cv})
 
-for i in range(num_candidates):
-    st.subheader(f"Kandidaat {i+1}")
-    candidate_name = st.text_input("Naam van de kandidaat", key=f"candidate_name_{i}")
-    candidate_names.append(candidate_name)
+# Motivatiebrief en CV uploaden voor elke kandidaat
+candidate_name = st.text_input("Naam van de kandidaat")
+motivation_letter = st.file_uploader("Motivatiebrief uploaden", type="pdf")
+cv = st.file_uploader("CV uploaden", type="pdf")
 
-    candidate_motivation_letter = st.file_uploader("Motivatiebrief (PDF)", type="pdf", key=f"motivation_letter_{i}")
-    candidate_motivation_letters.append(candidate_motivation_letter)
+if st.button("Kandidaat toevoegen"):
+    if candidate_name and motivation_letter and cv:
+        add_candidate(candidate_name, motivation_letter, cv)
+        st.success("Kandidaat succesvol toegevoegd!")
 
-    candidate_cv = st.file_uploader("CV (PDF)", type="pdf", key=f"cv_{i}")
-    candidate_cvs.append(candidate_cv)
-
-# Verzendknop
+# Verzend knop
 if st.button("Verzend"):
-    for i in range(num_candidates):
-        st.subheader(f"Resultaten voor kandidaat {i+1}")
-        candidate_text = ""
-        if candidate_motivation_letters[i] is not None:
-            candidate_text += candidate_motivation_letters[i].read().decode()
-        if candidate_cvs[i] is not None:
-            candidate_text += candidate_cvs[i].read().decode()
-
-        encoded_output = run_roberta(candidate_text)
-        # Voer verdere verwerking en scoreberekening uit voor de kandidaat
+    if company_name and company_core_values and job_role and candidates:
+        st.subheader("Organisatie informatie:")
+        st.write("Naam van de organisatie:", company_name)
+        st.write("Kernwaarden van de organisatie:", company_core_values)
+        st.write("Openstaande functie/rol:", job_role)
+        st.subheader("Kandidaten:")
+        for candidate in candidates:
+            st.write("Naam:", candidate["name"])
+            st.write("Motivatiebrief:", candidate["motivation_letter"].name)
+            st.write("CV:", candidate["cv"].name)
+            st.write("Score:")
+            candidate_tokens = candidate["motivation_letter"].read().decode() + " " + candidate["cv"].read().decode()
+            outputs = run_roberta(candidate_tokens)
+            st.write(outputs)  # Weergeef de scores voor elke kandidaat
+    else:
+        st.warning("Vul alle velden in en voeg minstens één kandidaat toe.")
 
