@@ -74,7 +74,10 @@ for candidate in candidate_info:
     candidate_tokens = encode_input(candidate_text)
     company_tokens = encode_input(company_text)
 
+    candidate_tokens = candidate_tokens.to(torch.long)  # Convert to long tensor
+    company_tokens = company_tokens.to(torch.long)  # Convert to long tensor
+
     candidate_encoded = run_bert(candidate_tokens)
     company_encoded = run_bert(company_tokens)
 
-   
+    similarity_score = calculate_similarity(candidate_encoded, company_encoded)
