@@ -26,8 +26,8 @@ def encode_input(text):
 def run_bert(tokens_tensor):
     with torch.no_grad():
         outputs = model(tokens_tensor)
-        pooled_output = outputs.pooler_output
-    return pooled_output
+        sequence_output = outputs[0]  # Use sequence_output instead of pooled_output
+    return sequence_output
 
 # Function to calculate similarity score
 def calculate_similarity(candidate_encoded, company_encoded):
