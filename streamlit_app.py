@@ -6,7 +6,7 @@ import torch
 # Load pre-trained model tokenizer (vocabulary)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 # Load pre-trained model (weights)
-model = BertModel.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained('bert-base-uncased', from_tf=False)
 
 # Set the model in evaluation mode to deactivate the DropOut modules
 model.eval()
