@@ -46,7 +46,7 @@ num_candidates = st.number_input('Number of candidates', min_value=1, value=1, s
 
 candidate_info = []
 for i in range(num_candidates):
-    with st.beta_expander(f"Candidate {i+1}"):
+    with st.expander(f"Candidate {i+1}"):
         name = st.text_input(f"Candidate {i+1} Name")
         cv = st.file_uploader(f"Upload CV for candidate {i+1}", type=['txt', 'pdf'])
         motivation = st.file_uploader(f"Upload Motivation Letter for candidate {i+1}", type=['txt', 'pdf'])
