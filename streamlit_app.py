@@ -2,6 +2,7 @@ import streamlit as st
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 from transformers import BertTokenizer, BertModel
+import io
 import torch
 
 # Load pre-trained model tokenizer (vocabulary)
@@ -59,9 +60,12 @@ for i in range(num_candidates):
 # Process candidate information
 for candidate in candidate_info:
     st.subheader(f"Matching for {candidate['name']}")
-    candidate_text = candidate["cv"].read().decode() if candidate["cv"] is not None else ""
+    candidate_text = ""
+    if candidate["cv"] is not None:
+        candidate_text += io.TextIOWrapper(candidate["cv"], encoding='utf-8').read()
     candidate_text += " "
-    candidate_text += candidate["motivation"].read().decode() if candidate["motivation"] is not None else ""
+    if candidate["motivation"] is not None:
+        candidate_text += io.TextIOWrapper(candidate["motivation"], encoding='utf-8').read()
 
     company_text = org_description + " " + org_values + " " + org_role
 
@@ -73,4 +77,3 @@ for candidate in candidate_info:
 
     similarity_score = calculate_similarity(candidate_encoded, company_encoded)
     st.write("Similarity Score:", similarity_score)
-
