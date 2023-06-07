@@ -51,17 +51,21 @@ role = st.text_input("What is the open position?")
 
 st.header('Candidate Info')
 candidate_name = st.text_input("Candidate's name:")
-motivation_letter = st.text_area("Please paste the motivation letter here:")
+uploaded_letter = st.file_uploader("Please upload the motivation letter:", type=['txt'])
 uploaded_cv = st.file_uploader("Please upload the CV:", type=['txt'])
+
+if uploaded_letter is not None:
+    letter_text = uploaded_letter.read().decode()
+else:
+    letter_text = ""
 
 if uploaded_cv is not None:
     cv_text = uploaded_cv.read().decode()
-    st.text(cv_text)
 else:
     cv_text = ""
 
 company_info = company_type + " " + core_values + " " + role
-candidate_info = motivation_letter + " " + cv_text
+candidate_info = letter_text + " " + cv_text
 
 company_tokens = encode_input(company_info)
 candidate_tokens = encode_input(candidate_info)
@@ -71,4 +75,10 @@ candidate_encoded = run_bert(candidate_tokens)
 
 experience_score = calculate_experience_score(candidate_encoded, company_encoded)
 role_score = calculate_role_score(candidate_encoded, company_encoded)
-culture_score = calculate_culture_score(candidate_encoded,
+culture_score = calculate_culture_score(candidate_encoded, company_encoded)
+
+# Display scores
+st.header('Match Scores for ' + candidate_name)
+st.write('Experience Score: ', experience_score)
+st.write('Role Score: ', role_score)
+st.write('Culture Score: ', culture_score)
