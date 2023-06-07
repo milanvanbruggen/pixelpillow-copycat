@@ -1,5 +1,5 @@
-import streamlit as st
 import torch
+from sklearn.metrics.pairwise import cosine_similarity
 from transformers import BertTokenizer, BertModel
 
 # Load pre-trained model tokenizer (vocabulary)
@@ -24,6 +24,23 @@ def run_bert(tokens_tensor):
         encoded_layers = outputs[0]
     return encoded_layers
 
+def calculate_score(encoded1, encoded2):
+    # Calculate cosine similarity
+    score = cosine_similarity(encoded1.detach().numpy(), encoded2.detach().numpy())
+    return score
+
+def calculate_experience_score(candidate_encoded, job_encoded):
+    # Placeholder function - replace with your own logic
+    return calculate_score(candidate_encoded, job_encoded)
+
+def calculate_role_score(candidate_encoded, job_encoded):
+    # Placeholder function - replace with your own logic
+    return calculate_score(candidate_encoded, job_encoded)
+
+def calculate_culture_score(candidate_encoded, job_encoded):
+    # Placeholder function - replace with your own logic
+    return calculate_score(candidate_encoded, job_encoded)
+
 # Streamlit app
 st.title('Job Matching App')
 
@@ -33,6 +50,7 @@ core_values = st.text_input("What are the core values of the company?")
 role = st.text_input("What is the open position?")
 
 st.header('Candidate Info')
+candidate_name = st.text_input("Candidate's name:")
 motivation_letter = st.text_area("Please paste the motivation letter here:")
 uploaded_cv = st.file_uploader("Please upload the CV:", type=['txt'])
 
@@ -51,4 +69,6 @@ candidate_tokens = encode_input(candidate_info)
 company_encoded = run_bert(company_tokens)
 candidate_encoded = run_bert(candidate_tokens)
 
-# TODO: Compare company_encoded and candidate_encoded to perform matching
+experience_score = calculate_experience_score(candidate_encoded, company_encoded)
+role_score = calculate_role_score(candidate_encoded, company_encoded)
+culture_score = calculate_culture_score(candidate_encoded,
