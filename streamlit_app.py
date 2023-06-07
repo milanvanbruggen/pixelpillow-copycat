@@ -1,7 +1,8 @@
 import streamlit as st
-import torch
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
 from transformers import BertTokenizer, BertModel
+import torch
 
 # Load pre-trained model tokenizer (vocabulary)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -25,61 +26,51 @@ def run_bert(tokens_tensor):
         encoded_layers = outputs[0]
     return encoded_layers
 
-def calculate_score(encoded1, encoded2):
-    # Calculate cosine similarity
-    score = cosine_similarity(encoded1.detach().numpy(), encoded2.detach().numpy())
+# Function to calculate similarity score
+def calculate_similarity(candidate_encoded, company_encoded):
+    score = cosine_similarity(candidate_encoded.detach().numpy(), company_encoded.detach().numpy())
     return score
-
-def calculate_experience_score(candidate_encoded, job_encoded):
-    # Placeholder function - replace with your own logic
-    return calculate_score(candidate_encoded, job_encoded)
-
-def calculate_role_score(candidate_encoded, job_encoded):
-    # Placeholder function - replace with your own logic
-    return calculate_score(candidate_encoded, job_encoded)
-
-def calculate_culture_score(candidate_encoded, job_encoded):
-    # Placeholder function - replace with your own logic
-    return calculate_score(candidate_encoded, job_encoded)
 
 # Streamlit app
 st.title('Job Matching App')
 
-st.header('Organisation Info')
-company_type = st.text_input("What type of company is it?")
-core_values = st.text_input("What are the core values of the company?")
-role = st.text_input("What is the open position?")
+# Organisation input
+st.header('Organisation Information')
+org_description = st.text_area("What kind of company is it?")
+org_values = st.text_area("What are the core values?")
+org_role = st.text_area("What is the open position/role?")
 
-st.header('Candidate Info')
-candidate_name = st.text_input("Candidate's name:")
-uploaded_letter = st.file_uploader("Please upload the motivation letter:", type=['txt'])
-uploaded_cv = st.file_uploader("Please upload the CV:", type=['txt'])
+# Candidates input
+st.header('Candidates Information')
+num_candidates = st.number_input('Number of candidates', min_value=1, value=1, step=1)
 
-if uploaded_letter is not None:
-    letter_text = uploaded_letter.read().decode()
-else:
-    letter_text = ""
+candidate_info = []
+for i in range(num_candidates):
+    with st.beta_expander(f"Candidate {i+1}"):
+        name = st.text_input(f"Candidate {i+1} Name")
+        cv = st.file_uploader(f"Upload CV for candidate {i+1}", type=['txt', 'pdf'])
+        motivation = st.file_uploader(f"Upload Motivation Letter for candidate {i+1}", type=['txt', 'pdf'])
+        candidate_info.append({
+            "name": name,
+            "cv": cv,
+            "motivation": motivation
+        })
 
-if uploaded_cv is not None:
-    cv_text = uploaded_cv.read().decode()
-else:
-    cv_text = ""
+# Process candidate information
+for candidate in candidate_info:
+    st.subheader(f"Matching for {candidate['name']}")
+    candidate_text = candidate["cv"].read().decode() if candidate["cv"] is not None else ""
+    candidate_text += " "
+    candidate_text += candidate["motivation"].read().decode() if candidate["motivation"] is not None else ""
 
-company_info = company_type + " " + core_values + " " + role
-candidate_info = letter_text + " " + cv_text
+    company_text = org_description + " " + org_values + " " + org_role
 
-company_tokens = encode_input(company_info)
-candidate_tokens = encode_input(candidate_info)
+    candidate_tokens = encode_input(candidate_text)
+    company_tokens = encode_input(company_text)
 
-company_encoded = run_bert(company_tokens)
-candidate_encoded = run_bert(candidate_tokens)
+    candidate_encoded = run_bert(candidate_tokens)
+    company_encoded = run_bert(company_tokens)
 
-experience_score = calculate_experience_score(candidate_encoded, company_encoded)
-role_score = calculate_role_score(candidate_encoded, company_encoded)
-culture_score = calculate_culture_score(candidate_encoded, company_encoded)
+    similarity_score = calculate_similarity(candidate_encoded, company_encoded)
+    st.write("Similarity Score:", similarity_score)
 
-# Display scores
-st.header('Match Scores for ' + candidate_name)
-st.write('Experience Score: ', experience_score)
-st.write('Role Score: ', role_score)
-st.write('Culture Score: ', culture_score)
