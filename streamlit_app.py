@@ -11,9 +11,13 @@ model = BertModel.from_pretrained('bert-base-uncased')
 # Set the model in evaluation mode to deactivate the DropOut modules
 model.eval()
 
+# Maximum sequence length
+max_length = 512
+
 # Function to encode input
 def encode_input(text):
     tokenized_text = tokenizer.tokenize(text)
+    tokenized_text = tokenized_text[:max_length]  # Truncate or pad to max_length
     indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
     tokens_tensor = torch.tensor([indexed_tokens])
     return tokens_tensor
@@ -22,8 +26,7 @@ def encode_input(text):
 def run_bert(tokens_tensor):
     with torch.no_grad():
         outputs = model(tokens_tensor)
-        hidden_states = outputs[0]
-        pooled_output = model.pooler(hidden_states) if model.pooler is not None else None
+        pooled_output = outputs.pooler_output
     return pooled_output
 
 # Function to calculate similarity score
@@ -71,5 +74,7 @@ for candidate in candidate_info:
     candidate_tokens = encode_input(candidate_text)
     company_tokens = encode_input(company_text)
 
-    if candidate_tokens.size(1) == 0:
-       
+    candidate_encoded = run_bert(candidate_tokens)
+    company_encoded = run_bert(company_tokens)
+
+   
