@@ -22,8 +22,9 @@ def encode_input(text):
 def run_bert(tokens_tensor):
     with torch.no_grad():
         outputs = model(tokens_tensor)
-        encoded_layers = outputs[0]
-    return encoded_layers
+        hidden_states = outputs[0]
+        pooled_output = model.pooler(hidden_states) if model.pooler is not None else None
+    return pooled_output
 
 # Function to calculate similarity score
 def calculate_similarity(candidate_encoded, company_encoded):
@@ -70,11 +71,5 @@ for candidate in candidate_info:
     candidate_tokens = encode_input(candidate_text)
     company_tokens = encode_input(company_text)
 
-    candidate_tokens = candidate_tokens.to(torch.long)  # Convert to long tensor
-    company_tokens = company_tokens.to(torch.long)  # Convert to long tensor
-
-    candidate_encoded = run_bert(candidate_tokens)
-    company_encoded = run_bert(company_tokens)
-
-    similarity_score = calculate_similarity(candidate_encoded, company_encoded)
-   
+    if candidate_tokens.size(1) == 0:
+       
