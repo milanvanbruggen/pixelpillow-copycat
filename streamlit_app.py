@@ -85,5 +85,5 @@ for candidate in candidate_info:
     elif company_encoded.size(1) == 0:
         st.warning("Company encoding failed. Please check the input.")
     else:
-        similarity_score = calculate_similarity(candidate_encoded, company_encoded)
+        similarity_score = calculate_similarity(candidate_encoded[:, 0], company_encoded[:, 0])
         st.success(f"Similarity score for {candidate['name']}: {similarity_score}")
