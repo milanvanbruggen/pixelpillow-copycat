@@ -2,65 +2,56 @@ import streamlit as st
 import torch
 from transformers import RobertaTokenizer, RobertaModel
 
-# Model laden
-model_name = 'roberta-base'
+# Model en tokenizer initialiseren
+model_name = "roberta-base"
 tokenizer = RobertaTokenizer.from_pretrained(model_name)
 model = RobertaModel.from_pretrained(model_name)
+
+# Functie om tekst te encoderen met het RoBERTa-model
+def run_roberta(text):
+    tokens = tokenizer.encode(text, add_special_tokens=True)
+    tokens_tensor = torch.tensor([tokens])
+    outputs = model(tokens_tensor)
+    return outputs
 
 # Streamlit app
 st.title("Job Matching App")
 
 # Organisatie input
 st.header("Organisatie informatie")
-company_name = st.text_input("Wat is de naam van het bedrijf?")
-core_values = st.text_area("Wat zijn de kernwaarden van het bedrijf?")
+company_type = st.selectbox("Wat voor bedrijf is het?", ["Optie 1", "Optie 2", "Optie 3"])
+company_values = st.text_input("Wat zijn de kernwaarden van het bedrijf?")
 job_role = st.text_input("Wat is de openstaande functie/rol?")
 
-# Kandidaat input
-st.header("Kandidaten informatie")
-num_candidates = st.number_input("Aantal kandidaten", min_value=1, value=1, step=1)
+# Kandidaten input
+st.header("Kandidaten")
+num_candidates = st.number_input("Aantal kandidaten", min_value=1, step=1, value=1)
 
-candidates = []
+candidate_names = []
+candidate_motivation_letters = []
+candidate_cvs = []
+
 for i in range(num_candidates):
     st.subheader(f"Kandidaat {i+1}")
-    candidate_name = st.text_input("Naam van de kandidaat")
-    cv_file = st.file_uploader("Upload CV (PDF)", type="pdf")
-    motivation_file = st.file_uploader("Upload motivatiebrief (PDF)", type="pdf")
-    if candidate_name and cv_file and motivation_file:
-        candidate = {
-            "name": candidate_name,
-            "cv": cv_file,
-            "motivation": motivation_file
-        }
-        candidates.append(candidate)
+    candidate_name = st.text_input("Naam van de kandidaat", key=f"candidate_name_{i}")
+    candidate_names.append(candidate_name)
 
-# Kandidaten vergelijken
-if st.button("Match kandidaten"):
-    for candidate in candidates:
-        st.subheader(f"Match voor kandidaat: {candidate['name']}")
-        cv_text = candidate["cv"].read().decode()
-        motivation_text = candidate["motivation"].read().decode()
+    candidate_motivation_letter = st.file_uploader("Motivatiebrief (PDF)", type="pdf", key=f"motivation_letter_{i}")
+    candidate_motivation_letters.append(candidate_motivation_letter)
 
-        # Tokenizen van de tekst
-        inputs = tokenizer.encode_plus(
-            cv_text,
-            motivation_text,
-            add_special_tokens=True,
-            max_length=512,
-            truncation=True,
-            padding="max_length",
-            return_tensors="pt"
-        )
-        input_ids = inputs["input_ids"]
-        attention_mask = inputs["attention_mask"]
+    candidate_cv = st.file_uploader("CV (PDF)", type="pdf", key=f"cv_{i}")
+    candidate_cvs.append(candidate_cv)
 
-        # Model inferentie
-        with torch.no_grad():
-            outputs = model(input_ids, attention_mask)
-            embeddings = outputs.last_hidden_state[:, 0, :]
+# Verzendknop
+if st.button("Verzend"):
+    for i in range(num_candidates):
+        st.subheader(f"Resultaten voor kandidaat {i+1}")
+        candidate_text = ""
+        if candidate_motivation_letters[i] is not None:
+            candidate_text += candidate_motivation_letters[i].read().decode()
+        if candidate_cvs[i] is not None:
+            candidate_text += candidate_cvs[i].read().decode()
 
-        # Doe iets met de embeddings, bijvoorbeeld bereken de cosine similarity met de organisatie embeddings
-        # ... je code hier ...
+        encoded_output = run_roberta(candidate_text)
+        # Voer verdere verwerking en scoreberekening uit voor de kandidaat
 
-        # Toon de resultaten
-        st.write("Score: ...")  # Vul hier de score in op basis van de embeddings
