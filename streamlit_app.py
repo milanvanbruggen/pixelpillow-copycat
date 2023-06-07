@@ -4,9 +4,9 @@ from transformers import BertTokenizer, BertModel
 import torch
 
 # Load pre-trained model tokenizer (vocabulary)
-tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', from_tf=False)
+tokenizer = BertTokenizer.from_pretrained('bert-large-multilingual-uncased')
 # Load pre-trained model (weights)
-model = BertModel.from_pretrained('bert-base-multilingual-uncased', from_tf=False)
+model = BertModel.from_pretrained('bert-large-multilingual-uncased')
 
 # Set the model in evaluation mode to deactivate the DropOut modules
 model.eval()
