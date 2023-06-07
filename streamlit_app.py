@@ -1,44 +1,54 @@
-import os
-import json
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-import pandas as pd
 import streamlit as st
+import torch
+from transformers import BertTokenizer, BertModel
 
-# Laad de instellingen
-with open('settings.json', 'r') as read_file:
-    settings = json.load(read_file)
+# Load pre-trained model tokenizer (vocabulary)
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+# Load pre-trained model (weights)
+model = BertModel.from_pretrained('bert-base-uncased')
 
-# Initialiseer de Spotify client
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=settings['client_id'],
-                                               client_secret=settings['client_secret'],
-                                               redirect_uri="https://milanvanbruggen-pixelpillow-copycat-streamlit-app-rpi1ua.streamlit.app/",
-                                               scope="user-read-playback-position,user-read-playback-state,user-modify-playback-state,playlist-modify-public,user-library-read"))
+# Set the model in evaluation mode to deactivate the DropOut modules
+model.eval()
 
-# Haal code parameter uit URL
-params = st.experimental_get_query_params()
-code = params.get('code')
+# Function to encode input
+def encode_input(text):
+    tokenized_text = tokenizer.tokenize(text)
+    indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
+    tokens_tensor = torch.tensor([indexed_tokens])
+    return tokens_tensor
 
-if code:
-    # Gebruik de eerste code om een toegangstoken te krijgen
-    token_info = sp.auth_manager.get_access_token(code[0])
-    token = token_info['access_token']
+# Function to run BERT model
+def run_bert(tokens_tensor):
+    with torch.no_grad():
+        outputs = model(tokens_tensor)
+        encoded_layers = outputs[0]
+    return encoded_layers
 
-    # Sla het token op voor later gebruik
-    os.environ['SPOTIPY_TOKEN'] = token
+# Streamlit app
+st.title('Job Matching App')
 
-# Krijg de volgers van de podcast
-podcast_details = sp.shows(podcast_id)
-st.write(podcast_details)
+st.header('Organisation Info')
+company_type = st.text_input("What type of company is it?")
+core_values = st.text_input("What are the core values of the company?")
+role = st.text_input("What is the open position?")
 
-# Lees de vorige podcast data
-df = pd.read_csv('podcast_data.csv')
+st.header('Candidate Info')
+motivation_letter = st.text_area("Please paste the motivation letter here:")
+uploaded_cv = st.file_uploader("Please upload the CV:", type=['txt'])
 
-# Update de dataframe met de nieuwe volgers teller
-df = df.append({'date': pd.Timestamp.now(), 'podcast_details': podcast_details}, ignore_index=True)
+if uploaded_cv is not None:
+    cv_text = uploaded_cv.read().decode()
+    st.text(cv_text)
+else:
+    cv_text = ""
 
-# Schrijf de dataframe terug naar het CSV bestand
-df.to_csv('podcast_data.csv', index=False)
+company_info = company_type + " " + core_values + " " + role
+candidate_info = motivation_letter + " " + cv_text
 
-# Toon de dataframe in de Streamlit app
-st.dataframe(df)
+company_tokens = encode_input(company_info)
+candidate_tokens = encode_input(candidate_info)
+
+company_encoded = run_bert(company_tokens)
+candidate_encoded = run_bert(candidate_tokens)
+
+# TODO: Compare company_encoded and candidate_encoded to perform matching
