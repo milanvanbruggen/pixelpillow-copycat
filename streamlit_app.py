@@ -21,8 +21,8 @@ st.title("Job Matching App")
 
 # Organisatie input
 st.header("Organisatie informatie")
-company_type = st.selectbox("Wat voor bedrijf is het?", ["Optie 1", "Optie 2", "Optie 3"])
-company_values = st.text_input("Wat zijn de kernwaarden van het bedrijf?")
+company_type = st.text_input("Wat voor bedrijf is het?")
+company_values = st.text_area("Wat zijn de kernwaarden van het bedrijf?")
 job_role = st.text_input("Wat is de openstaande functie/rol?")
 
 # Kandidaten input
